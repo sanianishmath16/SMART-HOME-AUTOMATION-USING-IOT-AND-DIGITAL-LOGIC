@@ -1,0 +1,66 @@
+Sample Arduino Code for ESP32 with Sensors:
+This code:
+
+*Reads from a PIR sensor, DHT11 sensor, and LDR
+*Controls a fan and light via relays
+*Uses simple digital logic conditions
+*Can be extended to work with Blynk or other IoT platforms
+
+
+#include <WiFi.h>
+#include <DHT.h>
+
+// ----- Pin Definitions -----
+#define PIR_PIN      13   // PIR Sensor Input
+#define LDR_PIN      34   // LDR Analog Input
+#define DHT_PIN      27   // DHT11 Data Pin
+#define FAN_RELAY    25   // Fan Relay Output
+#define LIGHT_RELAY  26   // Light Relay Output
+
+// ----- DHT Setup -----
+#define DHTTYPE DHT11
+DHT dht(DHT_PIN, DHTTYPE);
+
+// ----- Thresholds -----
+#define TEMP_THRESHOLD 30
+#define LIGHT_THRESHOLD 500  // Adjust depending on environment
+
+void setup() {
+  Serial.begin(115200);
+  
+  pinMode(PIR_PIN, INPUT);
+  pinMode(FAN_RELAY, OUTPUT);
+  pinMode(LIGHT_RELAY, OUTPUT);
+  
+  dht.begin();
+
+  // Turn off devices initially
+  digitalWrite(FAN_RELAY, LOW);
+  digitalWrite(LIGHT_RELAY, LOW);
+}
+
+void loop() {
+  int motion = digitalRead(PIR_PIN);
+  int lightLevel = analogRead(LDR_PIN);
+  float temp = dht.readTemperature();
+
+  Serial.print("Motion: "); Serial.print(motion);
+  Serial.print(" | Light: "); Serial.print(lightLevel);
+  Serial.print(" | Temp: "); Serial.println(temp);
+
+  // Light Control Logic: Motion AND Dark
+  if (motion == HIGH && lightLevel < LIGHT_THRESHOLD) {
+    digitalWrite(LIGHT_RELAY, HIGH);  // Turn ON light
+  } else {
+    digitalWrite(LIGHT_RELAY, LOW);   // Turn OFF light
+  }
+
+  // Fan Control Logic: Motion AND High Temperature
+  if (motion == HIGH && temp > TEMP_THRESHOLD) {
+    digitalWrite(FAN_RELAY, HIGH);    // Turn ON fan
+  } else {
+    digitalWrite(FAN_RELAY, LOW);     // Turn OFF fan
+  }
+
+  delay(2000);  // Adjust as needed
+}
